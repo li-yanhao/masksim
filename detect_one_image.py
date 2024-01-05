@@ -20,6 +20,9 @@ CLASS_NAMES = [
 ]
 IMG_SIZE = 512
 
+ROOT = os.path.dirname(os.path.realpath(__file__))
+
+
 def detect_one_image(fname: str,
                      compress_Q: int):
     if compress_Q < 0:
@@ -32,7 +35,8 @@ def detect_one_image(fname: str,
     # 1. load model
     train_models = dict()
     for class_name in CLASS_NAMES:
-        ckpt_fpattern = f"checkpoints/{comp_or_uncomp}/{class_name}" + "*.ckpt"
+        ckpt_fpattern = os.path.join(ROOT, f"checkpoints/{comp_or_uncomp}/{class_name}" + "*.ckpt")
+        print("ckpt_fpattern:", ckpt_fpattern)
         ckpt_fnames = glob.glob(ckpt_fpattern)
         ckpt_fnames.sort(key=os.path.getctime)
         ckpt_fname = ckpt_fnames[-1]
