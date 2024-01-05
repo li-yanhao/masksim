@@ -22,7 +22,7 @@ IMG_SIZE = 512
 
 def detect_one_image(fname: str,
                      compress_Q: int):
-    if compress_Q is None:
+    if compress_Q < 0:
         comp_or_uncomp = "uncompress"
     else:
         comp_or_uncomp = f"compress_Q{compress_Q}"
@@ -69,13 +69,13 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--img_filename', type=str, required=True,
                         help='tested image file name')
     parser.add_argument('-c', '--compress_rate', type=int, required=False,
-                        help='the JPEG compression quality factor', choices=[None, 90, 80, 70], default=None)
+                        help='the JPEG compression quality factor', choices=[-1, 90, 80, 70], default=-1)
     args = parser.parse_args()
 
     fname = args.img_filename
     compress_Q = args.compress_rate
 
-    if compress_Q is None:
+    if compress_Q < 0:
         print("Loading model weights for detecting uncompressed images. \n")
     else:
         print("Loading model weights for detecting images compressed by JPEG at quality factor", compress_Q)
