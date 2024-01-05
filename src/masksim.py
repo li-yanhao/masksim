@@ -105,9 +105,7 @@ class MaskSim(pl.LightningModule):
             )
         else:
             self.preproc = nn.Identity()
-        print("\nApplying preprocessing: ", preprocess, "\n")
-        
-        
+        # print("\nApplying preprocessing: ", preprocess, "\n")
         
         self.ref_pattern_list = nn.ParameterList()
         self.mask_pre_activ_list = nn.ParameterList()

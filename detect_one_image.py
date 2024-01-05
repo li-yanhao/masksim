@@ -1,11 +1,13 @@
-import os
+import argparse
 import glob
+import os
+
 import numpy as np
 import torch
 
-
 from src.masksim import MaskSim
 from src.dataset import MaskSimDataset
+
 
 CLASS_NAMES = [
     "sd1",
@@ -18,9 +20,12 @@ CLASS_NAMES = [
 ]
 IMG_SIZE = 512
 
-def detect_one_image(fname):
-    # TODO: as variable
-    comp_or_uncomp = "uncompress"
+def detect_one_image(fname: str,
+                     compress_Q: int):
+    if compress_Q is None:
+        comp_or_uncomp = "uncompress"
+    else:
+        comp_or_uncomp = f"compress_Q{compress_Q}"
 
     device = torch.device("cpu")
 
@@ -33,7 +38,6 @@ def detect_one_image(fname):
         ckpt_fname = ckpt_fnames[-1]
 
         model = MaskSim.load_from_checkpoint(ckpt_fname, map_location=device).float()
-        print("Loaded model from ", ckpt_fname)
         model.eval()
         train_models[class_name] = model
 
@@ -49,17 +53,31 @@ def detect_one_image(fname):
         for class_name in CLASS_NAMES:
             model: MaskSim = train_models[class_name]
             scores : torch.Tensor = model.compute_probs(imgs)
-            # real_to_fake_scores.append(scores.detach().cpu().numpy())
             scores_all.append(scores.detach().cpu().numpy())
     
-    print("scores_all:", scores_all)
-    pass
-
-
-def inspect(score: float):
-    pass
+    score_final = np.concatenate(scores_all).max()
+    print("score final:", score_final)
+    print()
 
 
 if __name__ == "__main__":
-    fname = "fake_001.png"
-    detect_one_image(fname)
+    parser = argparse.ArgumentParser(
+        prog='python detect_one_image.py',
+        description='MaskSim: Detection of synthetic images by masked spectrum similarity analysis. (c) 2024 Yanhao Li. Under license GNU AGPL.'
+    )
+
+    parser.add_argument('-i', '--img_filename', type=str, required=True,
+                        help='tested image file name')
+    parser.add_argument('-c', '--compress_rate', type=int, required=False,
+                        help='the JPEG compression quality factor', choices=[None, 90, 80, 70], default=None)
+    args = parser.parse_args()
+
+    fname = args.img_filename
+    compress_Q = args.compress_rate
+
+    if compress_Q is None:
+        print("Loading model weights for detecting uncompressed images. \n")
+    else:
+        print("Loading model weights for detecting images compressed by JPEG at quality factor", compress_Q)
+
+    detect_one_image(fname, compress_Q)
