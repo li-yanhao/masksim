@@ -12,8 +12,9 @@ WORKDIR $bin
 
 # download the model weights
 # RUN mkdir -p checkpoints
-RUN wget https://cirrus.universite-paris-saclay.fr/s/SscHmgDi2gyiF2s/download/checkpoints.zip -P ./
-RUN unzip checkpoints.zip
+RUN wget https://cirrus.universite-paris-saclay.fr/s/SscHmgDi2gyiF2s/download/checkpoints.zip -P ./ \
+    && unzip checkpoints.zip \
+    && rm checkpoints.zip
 
 # copy the code to $bin
 COPY . .

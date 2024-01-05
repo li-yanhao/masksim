@@ -18,6 +18,18 @@ CLASS_NAMES = [
     "midjourney",
     "firefly",
 ]
+
+CLASS_FULLNAME_DICT = {
+    "sd1": "stable-diffusion-1",
+    "sd2": "stable-diffusion-2",
+    "sdxl":  "stable-diffusion-xl",
+    "glide":  "glide",
+    "dalle2":"dalle2",
+    "dalle3":"dalle3",
+    "midjourney": "midjourney",
+    "firefly": "firefly",
+}
+
 IMG_SIZE = 512
 
 ROOT = os.path.dirname(os.path.realpath(__file__))
@@ -30,20 +42,22 @@ def detect_one_image(fname: str,
     else:
         comp_or_uncomp = f"compress_Q{compress_Q}"
 
-    device = torch.device("cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda:0")
+    else:
+        device = torch.device("cpu")
 
     # 1. load model
     train_models = dict()
     for class_name in CLASS_NAMES:
         ckpt_fpattern = os.path.join(ROOT, f"checkpoints/{comp_or_uncomp}/{class_name}" + "*.ckpt")
-        print("ckpt_fpattern:", ckpt_fpattern)
         ckpt_fnames = glob.glob(ckpt_fpattern)
         ckpt_fnames.sort(key=os.path.getctime)
         ckpt_fname = ckpt_fnames[-1]
 
         model = MaskSim.load_from_checkpoint(ckpt_fname, map_location=device).float()
         model.eval()
-        train_models[class_name] = model
+        train_models[class_name] = model.to(device)
 
     # 2. process image
     dataset = MaskSimDataset(img_dir_real_list=[], img_dir_fake_list=[], img_size=IMG_SIZE,
@@ -52,15 +66,23 @@ def detect_one_image(fname: str,
     imgs = dataset.process(fname, label=None)
     
     # 3. compute scores
-    scores_all = []
+    score_final = -1
+    class_full_name_final = None
     with torch.no_grad():
         for class_name in CLASS_NAMES:
             model: MaskSim = train_models[class_name]
+            imgs = imgs.to(device)
             scores : torch.Tensor = model.compute_probs(imgs)
-            scores_all.append(scores.detach().cpu().numpy())
-    
-    score_final = np.concatenate(scores_all).max()
-    print("score final:", score_final)
+            score = scores.cpu()[0]
+            class_full_name = CLASS_FULLNAME_DICT[class_name]
+            print("Score from the detector of {}: {}".format(class_full_name, scores[0]))
+
+            if score > score_final:
+                class_full_name_final = class_full_name
+                score_final = score
+
+    print()
+    print("Maximum score from the detector of {} as the final score: {}".format(class_full_name_final, score_final))
     print()
 
 
@@ -83,5 +105,6 @@ if __name__ == "__main__":
         print("Loading model weights for detecting uncompressed images. \n")
     else:
         print("Loading model weights for detecting images compressed by JPEG at quality factor", compress_Q)
+    print()
 
     detect_one_image(fname, compress_Q)
