@@ -19,7 +19,7 @@ To test the program on one single image:
 python detect_one_image.py -i fake_img.png
 ```
 
-An [IPOL demo](https://ipolcore.ipol.im/demo/clientApp/demo.html?id=77777002399) is now available.
+An [IPOL demo](https://ipolcore.ipol.im/demo/clientApp/demo.html?id=77777000482) is now available.
 
 
 ## Training
