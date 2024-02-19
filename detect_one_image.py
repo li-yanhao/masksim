@@ -52,6 +52,7 @@ def detect_one_image(fname: str,
     for class_name in CLASS_NAMES:
         ckpt_fpattern = os.path.join(ROOT, f"checkpoints/{comp_or_uncomp}/{class_name}" + "*.ckpt")
         ckpt_fnames = glob.glob(ckpt_fpattern)
+        assert len(ckpt_fnames) > 0, "Cannot find checkpoints in " + os.path.join(ROOT, f"checkpoints/{comp_or_uncomp}")
         ckpt_fnames.sort(key=os.path.getctime)
         ckpt_fname = ckpt_fnames[-1]
 

@@ -1,3 +1,20 @@
+# Copyright (c) 2023 Yanhao Li
+# yanhao.li@outlook.com
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+
 import glob
 import os
 from io import BytesIO
@@ -101,7 +118,8 @@ class MaskSimDataset(Dataset):
                  color_space:str="YCbCr",
                  compress_aug:str=None,
                  fix_q:int=None,
-                 mode:str="valid"):
+                 mode:str="valid",
+                 limit_nb_img:int=None):
         super().__init__()
         self.img_fnames = []
         self.labels = []
@@ -139,14 +157,19 @@ class MaskSimDataset(Dataset):
         self.labels.extend([0] * len(self.fnames_real))
         self.labels.extend([1] * len(self.fnames_fake))
 
-        if self.mode != "test":
+        # if self.mode != "test":
             # shuffle in advance the positives and negatives
-            self.fnames = np.array(self.fnames)
-            self.labels = np.array(self.labels)
-            indices = np.arange(len(self.fnames))
-            np.random.shuffle(indices)
-            self.fnames = self.fnames[indices]
-            self.labels = self.labels[indices]
+        
+        self.fnames = np.array(self.fnames)
+        self.labels = np.array(self.labels)
+        indices = np.arange(len(self.fnames))
+        np.random.shuffle(indices)
+        self.fnames = self.fnames[indices]
+        self.labels = self.labels[indices]
+
+        if limit_nb_img is not None:
+            self.fnames = self.fnames[:limit_nb_img]
+            self.labels = self.labels[:limit_nb_img]
 
     def process(self, fname:str, label:int):
         img = skimage.io.imread(fname)
@@ -161,22 +184,32 @@ class MaskSimDataset(Dataset):
             img = center_crop(img, self.img_size)
             imgs = img[None, ...]
 
-        if self.mode == "train":
-            if label == 0 and np.random.rand() < 0.9: # only augment fake samples
-                for idx in range(len(imgs)):
-                    imgs[idx] = A.augmentations.transforms.GaussNoise(p=0.5)(image=imgs[idx])["image"]
-                    imgs[idx] = A.augmentations.transforms.Sharpen(p=0.5)(image=imgs[idx])["image"]
-                    imgs[idx] = A.augmentations.Defocus(p=0.5)(image=imgs[idx])["image"]
-                    imgs[idx] = A.augmentations.transforms.CLAHE(p=0.5)(image=imgs[idx])["image"]
-                    imgs[idx] = A.augmentations.transforms.RGBShift(p=0.5)(image=imgs[idx])["image"]
-                    imgs[idx] = A.augmentations.transforms.ColorJitter(p=0.5)(image=imgs[idx])["image"]
-                    imgs[idx] = A.augmentations.transforms.HueSaturationValue(p=0.5)(image=imgs[idx])["image"]
-                    imgs[idx] = A.augmentations.transforms.RandomGamma(p=0.5)(image=imgs[idx])["image"]
-                    imgs[idx] = A.augmentations.transforms.Emboss(p=0.5)(image=imgs[idx])["image"]
-                    imgs[idx] = A.augmentations.geometric.rotate.Rotate(p=0.5)(image=imgs[idx])["image"]
+        if self.mode == "train" and label == 0 and np.random.rand() < 0.9:
+            # only augment real samples during training
+            for idx in range(len(imgs)):
+                imgs[idx] = A.augmentations.transforms.GaussNoise(p=0.5)(image=imgs[idx])["image"]
+                imgs[idx] = A.augmentations.transforms.Sharpen(p=0.5)(image=imgs[idx])["image"]
+                imgs[idx] = A.augmentations.Defocus(p=0.5)(image=imgs[idx])["image"]
+                imgs[idx] = A.augmentations.transforms.CLAHE(p=0.5)(image=imgs[idx])["image"]
+                imgs[idx] = A.augmentations.transforms.RGBShift(p=0.5)(image=imgs[idx])["image"]
+                imgs[idx] = A.augmentations.transforms.ColorJitter(p=0.5)(image=imgs[idx])["image"]
+                imgs[idx] = A.augmentations.transforms.HueSaturationValue(p=0.5)(image=imgs[idx])["image"]
+                imgs[idx] = A.augmentations.transforms.RandomGamma(p=0.5)(image=imgs[idx])["image"]
+                imgs[idx] = A.augmentations.transforms.Emboss(p=0.5)(image=imgs[idx])["image"]
+                imgs[idx] = A.augmentations.geometric.rotate.Rotate(p=0.5)(image=imgs[idx])["image"]
+
 
         # TODO: it doesn't work so far
-        if (self.compress_aug is not None) and (self.mode in ["train", "valid"]) and (label == 0):
+        # if (self.compress_aug is not None) and (self.mode in ["train"]) and (label == 0):
+        #     for idx in range(len(imgs)):
+        #         img_pil = Image.fromarray(imgs[idx])
+        #         if self.compress_aug == "jpeg":
+        #             img_pil = augment_jpeg_pil(img_pil, p=1.0, quality=self.fix_q)
+        #         elif self.compress_aug == "webp":
+        #             img_pil = augment_webp_pil(img_pil, p=1.0)
+        #         imgs[idx] = np.array(img_pil)
+        
+        if (self.compress_aug is not None) and (self.mode in ["train", "valid"]):
             for idx in range(len(imgs)):
                 img_pil = Image.fromarray(imgs[idx])
                 if self.compress_aug == "jpeg":
@@ -184,6 +217,7 @@ class MaskSimDataset(Dataset):
                 elif self.compress_aug == "webp":
                     img_pil = augment_webp_pil(img_pil, p=1.0)
                 imgs[idx] = np.array(img_pil)
+
 
         if self.color_space == "YCbCr":
             for idx in range(len(imgs)):
