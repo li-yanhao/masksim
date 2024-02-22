@@ -5,11 +5,12 @@ from typing import List
 import argparse
 
 from src.masksim import MaskSim
-from src.dataset import MaskSimDataset
+from src.dataset import MaskSimDataset, BatchSampler
 import numpy as np
 import torch
 from torch import utils
 from torch.utils.data import (
+    RandomSampler,
     SubsetRandomSampler,
     ConcatDataset
 )
@@ -55,15 +56,21 @@ TRAIN_CLASS_NAMES = [
     "firefly",
 ]
 
-IMG_SIZE = 512
 CHANNELS = 3
 LEARNING_RATE = 1e-4
 # LEARNING_RATE = 0.001
 # LEARNING_RATE = 5e-5 # DnCNN
 # LEARNING_RATE = 1e-3 # no filter
-BATCH_SZ = 8
-NUM_WORKERS = 8  # 6
+
+NUM_WORKERS = 6  # 6
 MAX_EPOCHS = 50
+RESCALE_MIN = 1.0
+RESCALE_MAX = 2.0
+
+## WARNING: set in argparse
+IMG_SIZE = -1
+BATCH_SZ = -1
+
 
 
 def print_info(*text):
@@ -99,52 +106,72 @@ def train_on_one_class(train_class_name:str, Q:int):
     real_train_folder = f"processed_data/train/dresden"
     real_valid_folder = f"processed_data/train/hdrburst"
 
-    fake_train_valid_folder = f"data/{TRAINING_SET}/{DATASETS[TRAINING_SET][train_class_name]}"
+    # fake_train_valid_folder = f"data/{TRAINING_SET}/{DATASETS[TRAINING_SET][train_class_name]}"
+    fake_train_folder = f"processed_data/train/{TRAINING_SET}/train/{DATASETS[TRAINING_SET][train_class_name]}"
+    fake_valid_folder = f"processed_data/train/{TRAINING_SET}/valid/{DATASETS[TRAINING_SET][train_class_name]}"
 
     model = MaskSim(img_size=IMG_SIZE, channels=CHANNELS, lr=LEARNING_RATE,
                     num_masks=1, preproc_freeze=False, preprocess="DnCNN").float()
-    real_train_dataset = MaskSimDataset(img_dir_real_list=[real_train_folder], 
-                                        img_dir_fake_list=[],
+    train_dataset = MaskSimDataset(img_dir_real_list=[real_train_folder], 
+                                        img_dir_fake_list=[fake_train_folder],
                                         img_size=IMG_SIZE,
                                         channels=CHANNELS,
                                         color_space=color_space,
                                         mode="train",
                                         compress_aug=compress_type,
-                                        fix_q=Q, limit_nb_img=2000
+                                        fix_q=Q, limit_nb_img=None,
+                                        rescale_min=RESCALE_MIN,
+                                        rescale_max=RESCALE_MAX
                                         )
-    print_info(f"{real_train_folder}: {len(real_train_dataset)} images")
+    print_info(f"{real_train_folder} +")
+    print_info(f"{fake_train_folder}: {len(train_dataset)} images")
+
     
-    real_valid_dataset = MaskSimDataset(img_dir_real_list=[real_valid_folder], 
-                                        img_dir_fake_list=[],
-                                        img_size=IMG_SIZE,
-                                        channels=CHANNELS,
-                                        color_space=color_space,
-                                        mode="valid",
-                                        compress_aug=compress_type,
-                                        fix_q=Q
-                                        )
-    print_info(f"{real_valid_folder}: {len(real_valid_dataset)} images")
+    valid_dataset = MaskSimDataset(img_dir_real_list=[real_valid_folder], 
+                                    img_dir_fake_list=[fake_valid_folder],
+                                    img_size=IMG_SIZE,
+                                    channels=CHANNELS,
+                                    color_space=color_space,
+                                    mode="valid",
+                                    compress_aug=compress_type,
+                                    fix_q=Q,
+                                    rescale_min=RESCALE_MIN,
+                                    rescale_max=RESCALE_MAX
+                                    )
+    print_info(f"{real_valid_folder} +")
+    print_info(f"{fake_valid_folder}: {len(valid_dataset)} images")
 
-    fake_dataset = MaskSimDataset(img_dir_real_list=[], 
-                                  img_dir_fake_list=[fake_train_valid_folder],
-                                  img_size=IMG_SIZE,
-                                  channels=CHANNELS,
-                                  color_space=color_space,
-                                  mode="train",
-                                  compress_aug=compress_type,
-                                  fix_q=Q
-                                  )
-    print_info(f"{fake_train_valid_folder}: {len(fake_dataset)} images")
+    # fake_dataset = MaskSimDataset(img_dir_real_list=[], 
+    #                               img_dir_fake_list=[fake_train_valid_folder],
+    #                               img_size=IMG_SIZE,
+    #                               channels=CHANNELS,
+    #                               color_space=color_space,
+    #                               mode="train",
+    #                               compress_aug=compress_type,
+    #                               fix_q=Q
+    #                               )
+    # print_info(f"{fake_train_valid_folder}: {len(fake_dataset)} images")
 
-    fake_train_dataset, fake_valid_dataset = torch.utils.data.random_split(fake_dataset, [0.9, 0.1])
-    train_dataset = ConcatDataset([real_train_dataset, fake_train_dataset])
-    valid_dataset = ConcatDataset([real_valid_dataset, fake_valid_dataset])
-    train_dataloader = utils.data.DataLoader(train_dataset, batch_size=BATCH_SZ,
-                                       shuffle=True, num_workers=NUM_WORKERS,
-                                       collate_fn=MaskSimDataset.collate_fn)
-    valid_dataloader = utils.data.DataLoader(valid_dataset, batch_size=BATCH_SZ,
-                                       shuffle=False, num_workers=NUM_WORKERS,
-                                       collate_fn=MaskSimDataset.collate_fn)
+    # fake_train_dataset, fake_valid_dataset = torch.utils.data.random_split(fake_dataset, [0.9, 0.1])
+    # train_dataset = ConcatDataset([real_train_dataset, fake_train_dataset])
+    # valid_dataset = ConcatDataset([real_valid_dataset, fake_valid_dataset])
+    
+    train_batch_sampler = BatchSampler(RandomSampler(train_dataset), batch_size=BATCH_SZ)
+    valid_batch_sampler = BatchSampler(RandomSampler(valid_dataset), batch_size=BATCH_SZ)
+
+    train_dataloader = utils.data.DataLoader(train_dataset, batch_sampler=train_batch_sampler,
+                                            shuffle=False, num_workers=NUM_WORKERS,
+                                            collate_fn=MaskSimDataset.collate_fn)
+    valid_dataloader = utils.data.DataLoader(valid_dataset, batch_sampler=valid_batch_sampler,
+                                            shuffle=False, num_workers=NUM_WORKERS,
+                                            collate_fn=MaskSimDataset.collate_fn)
+
+    # train_dataloader = utils.data.DataLoader(train_dataset, batch_size=BATCH_SZ,
+    #                                    shuffle=True, num_workers=NUM_WORKERS,
+    #                                    collate_fn=MaskSimDataset.collate_fn)
+    # valid_dataloader = utils.data.DataLoader(valid_dataset, batch_size=BATCH_SZ,
+    #                                    shuffle=False, num_workers=NUM_WORKERS,
+    #                                    collate_fn=MaskSimDataset.collate_fn)
     
     ckpt_path=f"checkpoints/{ckpt_tag}/{TRAINING_SET}"
     os.makedirs(ckpt_path, exist_ok=True)
@@ -181,7 +208,7 @@ def train_on_one_class(train_class_name:str, Q:int):
                         log_every_n_steps=1, profiler=None,
                         enable_checkpointing=True,
                         callbacks=[best_callback],
-                        enable_progress_bar=False
+                        enable_progress_bar=True
                         )
 
     trainer.fit(model=model, train_dataloaders=train_dataloader,
@@ -198,7 +225,7 @@ if __name__ == "__main__":
     parser.add_argument('-Q', '--Q', type=int, required=False,
                         help='compression quality factor', default=None)
     parser.add_argument('-w', '--w', type=int, required=False,
-                        help='image size', default=512)
+                        help='image size', default=256)
     parser.add_argument('-b', '--batch_sz', type=int, required=False,
                         help='batch size', default=8)
     args = parser.parse_args()

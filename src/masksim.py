@@ -23,6 +23,7 @@ import numpy as np
 import pytorch_lightning as pl
 import torchmetrics
 from torchmetrics.aggregation import MeanMetric
+import torchvision.transforms.functional
 
 from .third_party.SyntheticImagesAnalysis.DnCNN import make_net
 
@@ -95,7 +96,7 @@ class MaskSim(pl.LightningModule):
                  preproc_freeze:bool=True
                  ):
         super().__init__()
-        
+
         self.save_hyperparameters()
 
         self.img_size = img_size
@@ -122,7 +123,7 @@ class MaskSim(pl.LightningModule):
         else:
             self.preproc = nn.Identity()
         # print("\nApplying preprocessing: ", preprocess, "\n")
-        
+
         self.ref_pattern_list = nn.ParameterList()
         self.mask_pre_activ_list = nn.ParameterList()
         for _ in range(num_masks):
@@ -262,13 +263,30 @@ class MaskSim(pl.LightningModule):
 
         similarities = []
         for mask, ref_pattern in zip(mask_list, self.ref_pattern_list):
-            mask = nn.Dropout(p=0.0)(mask)
-            ref_pattern = nn.Dropout(p=0.0)(ref_pattern)
+            # mask = nn.Dropout(p=0.0)(mask)
+            # ref_pattern = nn.Dropout(p=0.0)(ref_pattern)
 
             mask = mask[None, ...]
-            ffts_masked = ffts * mask  # B, C*n, H, W
 
-            vectors_ref = ref_pattern.view(C, -1)  # C*n, K
+            # print("ffts:", ffts.shape)
+            if mask.shape[-2:] != ffts.shape[-2:]:
+
+                h_c, w_c = ffts.shape[-2:]
+                mask_c: torch.Tensor = torch.nn.functional.interpolate(mask, size=(h_c, w_c), mode="bilinear")
+                # ref_pattern_c: torch.Tensor = torch.nn.functional.interpolate(ref_pattern[None, ...], size=(h_c, w_c), mode="bilinear")
+                ref_pattern_c: torch.Tensor = torchvision.transforms.functional.resize(
+                    ref_pattern, (h_c, w_c),
+                    interpolation=torchvision.transforms.functional.InterpolationMode.BILINEAR)
+                
+                # print("mask_c:", mask_c.shape)
+                # print("ref_pattern_c:", ref_pattern_c.shape)
+            else:
+                ref_pattern_c = ref_pattern
+                mask_c = mask
+
+            ffts_masked = ffts * mask_c  # B, C*n, H, W
+
+            vectors_ref = ref_pattern_c.view(C, -1)  # C*n, K
             vectors = ffts_masked.view(B, C, -1)  # B, C, K
 
             K = vectors_ref.shape[-1]
@@ -303,7 +321,12 @@ class MaskSim(pl.LightningModule):
         return neg_similarity, pos_similarity
 
     def training_step(self, batch, batch_idx):
-        imgs, labels = batch
+        imgs, scales, labels = batch
+        
+        # print("imgs:", imgs.shape)
+        # print("scales:", scales)
+        # print("labels:", labels)
+
         similarity = self.forward(imgs)
 
         similarity_pos = similarity[labels == 1]
@@ -352,7 +375,12 @@ class MaskSim(pl.LightningModule):
         return loss
     
     def validation_step(self, batch, batch_idx):
-        imgs, labels = batch
+        imgs, scales, labels = batch
+                
+        # print("imgs:", imgs.shape)
+        # print("scales:", scales)
+        # print("labels:", labels)
+
         similarity = self.forward(imgs)
 
         logits = torch.exp(self.clf_a) * similarity + self.clf_b

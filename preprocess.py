@@ -32,11 +32,12 @@ NEWSYNTH_UNCOMP_LIST = [
 REAL_UNCOMP_LIST = [
     # "data/raise-2k",
     "data/hdrburst",
-    "data/dresden",
+    # "data/dresden",
+    # "data/mit5k",
 ]
 
 IMG_SIZE = 512
-NUM_WORKERS = 10
+NUM_WORKERS = 16
 
 
 def random_crop(img, crop_size:int):

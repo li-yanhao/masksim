@@ -18,7 +18,7 @@
 import glob
 import os
 from io import BytesIO
-from typing import List, Sequence, Iterator
+from typing import List, Sequence, Iterator, Tuple
 
 import numpy as np
 import skimage
@@ -51,6 +51,45 @@ def augment_webp_pil(img_pil:Image, p:float=1.0) -> Image:
         img_pil = Image.open(bytes)
     return img_pil
 
+
+def augment_resample(imgs: np.ndarray, min_r:float, max_r:float, p:float=1.0, seed:int=None) -> Tuple[np.ndarray, float]:
+    # TODO: try different resampling methods
+    assert p <= 1.0
+    if np.random.rand() < p:
+        if seed is not None:
+            np.random.seed(seed)
+        r = np.random.uniform(min_r, max_r)
+        # print("r:", r)
+
+        h_o, w_o = int(imgs.shape[1] * r), int(imgs.shape[2] * r)
+        # print("imgs before resizing:", imgs.shape)
+
+        # either using torch interpolation        
+        # imgs = torch.from_numpy(imgs)
+        # imgs = torch.permute(imgs, (0,3,1,2))
+        # imgs: torch.Tensor = torch.nn.functional.interpolate(imgs, size=(h_o, w_o), mode="bilinear")
+        # imgs = torch.permute(imgs, (0,2,3,1))
+        # imgs = imgs.numpy()
+        
+        # or using Albumentation
+        imgs_o = []
+        for idx in range(len(imgs)):
+            imgs_o.append(A.augmentations.geometric.resize.Resize(h_o, w_o, interpolation=1, always_apply=True, p=1)(image=imgs[idx])["image"])
+        imgs = np.stack(imgs_o)
+
+        # print("imgs after resizing:", imgs.shape)
+    else:
+        r = 1.0
+
+    # option: Albumentation
+    ## A.augmentations.geometric.resize.Resize(height, width, interpolation=1, always_apply=False, p=1)
+    # option: skimage
+    ## img_o = skimage.transform.rescale(img, r, )
+    # option: opencv
+    # option: PILLOW
+    # option: different interpolations
+    
+    return imgs, r
 
 def random_crop(img:np.ndarray, crop_size:int) -> np.ndarray:
     h_orig, w_orig = img.shape[:2]
@@ -110,6 +149,31 @@ class WeightedSubsetRandomSampler(Sampler[int]):
         return len(self.indices)
     
 
+class BatchSampler(Sampler):
+    def __init__(self, sampler, batch_size, drop_last=False):
+        self.sampler = sampler
+        self.drop_last = drop_last
+        self.batch_size = batch_size
+        
+        self.rng = np.random.default_rng(12345)
+        self.rd_seed = 0
+
+    def __iter__(self):
+        batch = []
+        
+        for idx in self.sampler:
+            batch.append((idx, self.rd_seed))
+            if len(batch) == self.batch_size:
+                yield batch
+
+                self.rd_seed = self.rng.integers(2**20)
+                batch = []
+
+        if len(batch) > 0 and not self.drop_last:
+            yield batch
+        self.rd_seed = self.rng.integers(2**20)
+
+    
 class MaskSimDataset(Dataset):
     def __init__(self, img_dir_fake_list:List[str], 
                  img_dir_real_list:List[str],
@@ -118,6 +182,8 @@ class MaskSimDataset(Dataset):
                  color_space:str="YCbCr",
                  compress_aug:str=None,
                  fix_q:int=None,
+                 rescale_min:float=1.0,
+                 rescale_max:float=1.0,
                  mode:str="valid",
                  limit_nb_img:int=None):
         super().__init__()
@@ -127,6 +193,9 @@ class MaskSimDataset(Dataset):
         self.mode = mode
         self.img_size = img_size
         self.color_space = color_space
+
+        self.rescale_min = rescale_min
+        self.rescale_max = rescale_max
         
         if compress_aug is not None:
             assert compress_aug in ["jpeg", "webp"]
@@ -171,12 +240,13 @@ class MaskSimDataset(Dataset):
             self.fnames = self.fnames[:limit_nb_img]
             self.labels = self.labels[:limit_nb_img]
 
-    def process(self, fname:str, label:int):
+    def process(self, fname:str, label:int, rd_seed=int) -> Tuple[torch.Tensor, float]:
         img = skimage.io.imread(fname)
         if np.ndim(img) == 2 or img.shape[0] < self.img_size or img.shape[1] < self.img_size:
             return None
 
         img = img[:, :, :3]
+        
         if self.mode == "train":
             img = random_crop(img, self.img_size)
             imgs = img[None, ...]
@@ -198,6 +268,8 @@ class MaskSimDataset(Dataset):
                 imgs[idx] = A.augmentations.transforms.Emboss(p=0.5)(image=imgs[idx])["image"]
                 imgs[idx] = A.augmentations.geometric.rotate.Rotate(p=0.5)(image=imgs[idx])["image"]
 
+        # pipeline: crop -> resample -> jpeg 
+        imgs, scale = augment_resample(imgs, self.rescale_min, self.rescale_max, p=1.0, seed=rd_seed)
 
         # TODO: it doesn't work so far
         # if (self.compress_aug is not None) and (self.mode in ["train"]) and (label == 0):
@@ -209,6 +281,8 @@ class MaskSimDataset(Dataset):
         #             img_pil = augment_webp_pil(img_pil, p=1.0)
         #         imgs[idx] = np.array(img_pil)
         
+        # resample
+
         if (self.compress_aug is not None) and (self.mode in ["train", "valid"]):
             for idx in range(len(imgs)):
                 img_pil = Image.fromarray(imgs[idx])
@@ -226,22 +300,24 @@ class MaskSimDataset(Dataset):
 
         imgs = np.transpose(imgs, (0, 3, 1, 2))
         imgs = torch.from_numpy(imgs).float() # N, H, W, C
-        return imgs
+
+        return imgs, scale
 
     def __len__(self) -> int:
         return len(self.fnames)
 
-    def __getitem__(self, index):
+    def __getitem__(self, item):
+        index, rd_seed = item
         fname = self.fnames[index]
         label = self.labels[index]
-        imgs = self.process(fname, label)
+        imgs, scale = self.process(fname, label, rd_seed)
 
         while imgs is None:
             index = np.random.randint(0, len(self.fnames))
             fname = self.fnames[index]
             label = self.labels[index]
-            imgs = self.process(fname, label)
-        return imgs, label
+            imgs, scale = self.process(fname, label, rd_seed)
+        return imgs, scale, label
 
     def get_data_sampler(self) -> WeightedRandomSampler:
         labels = np.array(self.labels)
@@ -254,8 +330,11 @@ class MaskSimDataset(Dataset):
     @staticmethod
     def collate_fn(data):
         imgs = [ d[0] for d in data ] # list of Ni x C x H x W
+        scales = torch.as_tensor([ d[1] for d in data ])
+        # print("scales in collate_fn(): ", scales)
+
         imgs = torch.concat(imgs)
-        labels = [ torch.ones(d[0].shape[0]) * d[1] for d in data] # list of scalars
+        labels = [ torch.ones(d[0].shape[0]) * d[2] for d in data] # list of scalars
         labels = torch.concat(labels)
 
         max_batch_sz = 64
@@ -264,4 +343,4 @@ class MaskSimDataset(Dataset):
             imgs = imgs[indices[:max_batch_sz]]
             labels = labels[indices[:max_batch_sz]]
 
-        return imgs, labels
+        return imgs, scales, labels

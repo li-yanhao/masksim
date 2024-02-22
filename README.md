@@ -38,6 +38,7 @@ Step 1: Preprocess the images
 
 ``` sh
 python preprocess.py
+python split_dataset.py
 ```
 
 Step 2: Train the model
