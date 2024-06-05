@@ -16,6 +16,7 @@
 
 
 from typing import List
+import os
 
 import torch
 from torch import nn, optim
@@ -52,6 +53,20 @@ def get_model():
                         dilats=[1, ] * num_levels,
                         bn_momentum=0.1, padding=0)
     weights_path = "src/third_party/SyntheticImagesAnalysis/DenoiserWeight/model_best.th"
+
+    if not os.path.isfile(weights_path):
+        print("Start downloading DnCNN pretrained weights ...")
+
+        import requests
+        weights_folder = "src/third_party/SyntheticImagesAnalysis/DenoiserWeight/"
+        os.makedirs(weights_folder, exist_ok=True)
+        download_url = "https://cirrus.universite-paris-saclay.fr/s/AyZbytJAmEymJNb/download/model_best.th"
+        response = requests.get(download_url)
+        with open(weights_path, 'wb') as file:
+            file.write(response.content)
+
+        print(f"Downloaded the DnCNN weights at {weights_path}")
+
     state_dict = torch.load(weights_path, torch.device('cpu'))
     model.load_state_dict(state_dict["network"])
     model.eval()
