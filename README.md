@@ -128,3 +128,5 @@ Coming soon
 - release training code of exp
 - release evaluation code of exp
 - release code for single image
+
+Feel free to leave your comments in the [Issues](https://github.com/li-yanhao/masksim/issues) for any bugs found or any discussion 😇
