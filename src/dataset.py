@@ -25,7 +25,6 @@ import skimage
 from skimage.util import view_as_blocks
 import torch
 from torch.utils.data import Dataset, WeightedRandomSampler, Sampler, ConcatDataset, DataLoader
-import torchvision.transforms as transforms
 from PIL import Image
 
 import albumentations as A
@@ -205,7 +204,6 @@ class MaskSimDataset(Dataset):
             if label == 0:
                 if np.random.rand() < 0.5:
                     up_ratio = self.img_size / min(img.shape[0], img.shape[1]) * np.random.uniform(1, 1.5)
-                    # final_size = int(self.img_size * up_ratio)
                     final_h, final_w = int(up_ratio * img.shape[0]), int(up_ratio * img.shape[1])
                     img = skimage.transform.resize(img, (final_h, final_w), preserve_range=True, anti_aliasing=False)
                     img = float_to_uint8(img)
@@ -220,20 +218,6 @@ class MaskSimDataset(Dataset):
         else:
             img = center_crop(img, self.img_size)
             imgs = img[None, ...]
-
-        # if self.mode == "train" and label == 0 and np.random.rand() < 0.0: # 0.5 before
-        #     # only augment real samples during training
-        #     for idx in range(len(imgs)):
-        #         imgs[idx] = A.augmentations.transforms.GaussNoise(p=0.5)(image=imgs[idx])["image"]
-        #         imgs[idx] = A.augmentations.transforms.Sharpen(p=0.5)(image=imgs[idx])["image"]
-        #         imgs[idx] = A.augmentations.Defocus(p=0.5)(image=imgs[idx])["image"]
-        #         imgs[idx] = A.augmentations.transforms.CLAHE(p=0.5)(image=imgs[idx])["image"]
-        #         imgs[idx] = A.augmentations.transforms.RGBShift(p=0.5)(image=imgs[idx])["image"]
-        #         imgs[idx] = A.augmentations.transforms.ColorJitter(p=0.5)(image=imgs[idx])["image"]
-        #         imgs[idx] = A.augmentations.transforms.HueSaturationValue(p=0.5)(image=imgs[idx])["image"]
-        #         imgs[idx] = A.augmentations.transforms.RandomGamma(p=0.5)(image=imgs[idx])["image"]
-        #         imgs[idx] = A.augmentations.transforms.Emboss(p=0.5)(image=imgs[idx])["image"]
-        #         imgs[idx] = A.augmentations.geometric.rotate.Rotate(p=0.5)(image=imgs[idx])["image"]
 
         if (self.compress_aug is not None) and (self.mode in ["train", "valid"]):
             for idx in range(len(imgs)):

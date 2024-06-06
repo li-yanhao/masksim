@@ -73,6 +73,7 @@ def get_model():
 
     return model
 
+
 def single2tensor4(img):
     return torch.from_numpy(np.ascontiguousarray(img)).permute(0, 3, 1, 2).float().unsqueeze(0)
 
@@ -134,7 +135,6 @@ class MaskSim(pl.LightningModule):
             )
         else:
             self.preproc = nn.Identity()
-        # print("\nApplying preprocessing: ", preprocess, "\n")
         
         self.ref_pattern_list = nn.ParameterList()
         self.mask_pre_activ_list = nn.ParameterList()
@@ -142,15 +142,12 @@ class MaskSim(pl.LightningModule):
             if reference_pattern is not None:
                 ref_pattern = torch.from_numpy(reference_pattern)
                 ref_pattern = nn.Parameter(ref_pattern, requires_grad=False)
-                # print("Using fixed pattern")
             else:
                 ref_pattern = torch.randn(channels, img_size, img_size) * 0.01
                 # For DnCNN, the output size is 478
                 if preprocess == "DnCNN":
                     # determine the output size of DnCNN
                     out_dncnn = self.preproc(torch.randn(1, channels, img_size, img_size))
-                    # print("out_dncnn:", out_dncnn.shape)
-                    # ref_pattern = torch.randn(channels, 478, 478) * 0.01
                     ref_pattern = torch.randn(out_dncnn.shape[1:4]) * 0.01
                 ref_pattern = nn.Parameter(ref_pattern, requires_grad=True)
                 ref_pattern.requires_grad_(True)
@@ -160,11 +157,8 @@ class MaskSim(pl.LightningModule):
             mask_pre_activation = torch.randn(channels, img_size, img_size) * 0.01
             if preprocess == "DnCNN":
                 out_dncnn = self.preproc(torch.randn(1, channels, img_size, img_size))
-                # print("out_dncnn:", out_dncnn.shape)
-                # mask_pre_activation = torch.randn(channels, 478, 478) * 0.01
                 mask_pre_activation = torch.randn(out_dncnn.shape[1:4]) * 0.01
             mask_pre_activation = nn.Parameter(mask_pre_activation)
-            # restrain mask to [0, 1] and sum = 1
             mask_pre_activation.requires_grad_(True)
             self.mask_pre_activ_list.append(mask_pre_activation)
 
@@ -183,8 +177,7 @@ class MaskSim(pl.LightningModule):
                         kernel_size=1, bias=False, padding=0),
         )
 
-        self.norm_vector = nn.BatchNorm1d(self.channels, affine=True)  # maybe no batchnorm is better
-        # self.norm_vector = nn.BatchNorm1d(self.channels, affine=False)  # maybe not affine but simply y=kx
+        self.norm_vector = nn.BatchNorm1d(self.channels, affine=True)
 
         self.clf_a = torch.tensor(0.)
         self.clf_a = nn.Parameter(self.clf_a)
@@ -313,7 +306,6 @@ class MaskSim(pl.LightningModule):
         ffts = self.in_conv_fft(ffts)
         mask_list = self.get_mask()
 
-        similarities = []
         for mask, ref_pattern in zip(mask_list, self.ref_pattern_list):
             mask = nn.Dropout(p=0.0)(mask)
             ref_pattern = nn.Dropout(p=0.0)(ref_pattern)
@@ -346,10 +338,6 @@ class MaskSim(pl.LightningModule):
 
             return similarity_map
 
-            # similarity = torch.nn.CosineSimilarity(dim=-1, eps=1e-08)(vectors, vectors_ref)
-
-        # return similarities
-    
     def compute_probs(self, imgs):
         similarities = self.forward(imgs) # B
         logits = torch.exp(self.clf_a) * similarities + self.clf_b
@@ -377,20 +365,10 @@ class MaskSim(pl.LightningModule):
         
         # original: abs negative similarity
         logits_neg = torch.exp(self.clf_a) * similarity_neg.abs() + self.clf_b
-        # what about using relu?
-        # logits_neg = torch.exp(self.clf_a) * torch.relu(similarity_neg) + self.clf_b
-        # what about allowing negative similarities?
-        # logits_neg = torch.exp(self.clf_a) * similarity_neg + self.clf_b
 
         probs_pos = nn.Sigmoid()(logits_pos).flatten()
         probs_neg = nn.Sigmoid()(logits_neg).flatten()
-        
-        # loss = 0
-        # if len(probs_pos) > 0:
-        #     loss += nn.BCELoss()(probs_pos, torch.ones_like(probs_pos))
-        # if len(probs_neg) > 0:
-        #     loss += nn.BCELoss()(probs_neg, torch.zeros_like(probs_neg))
-        
+
         loss_ce = nn.BCELoss()(
             torch.concat([probs_pos, probs_neg]),
             torch.concat([torch.ones_like(probs_pos), torch.zeros_like(probs_neg)]),
@@ -476,7 +454,6 @@ class MaskSim(pl.LightningModule):
         self.test_auroc.update(torch.sigmoid(neg_logits), torch.zeros_like(neg_similarity))
         self.test_auroc.update(torch.sigmoid(pos_logits), torch.ones_like(pos_similarity))
 
-
         similarity_compare = -pos_similarity[None, :].expand(B, B) \
                         + neg_similarity[:, None].expand(B, B)
         success_rate = (similarity_compare < 0).float().mean()
@@ -514,13 +491,6 @@ class MaskSim(pl.LightningModule):
         self.train_loss_neg.reset()
         self.log('train_loss_neg', train_loss_neg, sync_dist=True)
 
-        # train_loss = self.train_loss.compute()
-        # print(f"train_loss: {train_loss:.3f} \n")
-        # self.train_loss.reset()
-        # self.log('train_loss', train_loss, sync_dist=True)
-
-        pass
-
     def on_validation_epoch_end(self):
 
         sim_neg = self.valid_sim_neg.compute()
@@ -553,13 +523,6 @@ class MaskSim(pl.LightningModule):
 
         self.log("valid_loss", (valid_loss_neg + valid_loss_pos) / 2, sync_dist=True)
 
-        # valid_loss = self.valid_loss.compute()
-        # print(f"valid_loss: {valid_loss:.3f} \n")
-        # self.valid_loss.reset()
-        # self.log('valid_loss', valid_loss, sync_dist=True)
-
-        pass
-
     def on_test_epoch_end(self):
 
         sim_neg = self.test_sim_neg.compute()
@@ -579,17 +542,8 @@ class MaskSim(pl.LightningModule):
         self.test_auroc.reset()
 
         self.log('test_auroc', val_auroc, sync_dist=True)
-        pass
 
     def configure_optimizers(self):
-        # exclude the params of classifier
-        # parameters = set(self.parameters()) - {self.clf_a} - {self.clf_b}
-        # optimizer = optim.Adam([
-        #         {'params': list(parameters)},
-        #         {'params': self.clf_a, 'lr': 1e-3},
-        #         {'params': self.clf_b, 'lr': 1e-3},
-        #     ], lr=self.lr, weight_decay=0.0)
-        
         if isinstance(self.preproc, DnCNN):
             # set lr=1e-4 for DnCNN 
             parameters = set(self.parameters()) - set(self.preproc.parameters())
@@ -600,9 +554,6 @@ class MaskSim(pl.LightningModule):
         else:
             optimizer = optim.Adam(self.parameters(), lr=self.lr, weight_decay=0.0)
         
-        # optimizer = optim.Adam(self.parameters(), lr=self.lr, weight_decay=0.0)  # don't add weight decay, otherwise the training doesn't converge
         scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99, verbose=True)
-        return [optimizer], [scheduler]
 
-    
-    
+        return [optimizer], [scheduler]

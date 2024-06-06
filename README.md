@@ -91,24 +91,24 @@ processed_data/
 
 
 ``` sh
-python train.py -w 512 -b 8 -e 50 -p DnCNN -Q random -v rand_jpeg_DnCNN --compression jpeg --progress
+python train.py -w 512 -b 8 -e 50 -p DnCNN -Q random --compression jpeg --progress
 ```
 
 
 ## Evaluation
-``` sh
-# python evaluate.py -Q random -w 512 -v rand_jpeg_DnCNN --compression jpeg --img_q random
-python evaluate.py -Q random -w 512 --compression jpeg --img_q random
-```
 
-
-The pretrained model weights can be downloaded [here](https://cirrus.universite-paris-saclay.fr/s/SscHmgDi2gyiF2s). Then unzip the weight files in the `checkpoints` folder like below:
+The pretrained model weights can be downloaded [here](https://cirrus.universite-paris-saclay.fr/s/bk8yEHntsbaHW5n/download/checkpoints.zip). Then unzip the weight files in the `checkpoints` folder like below:
 ```
 checkpoints/JPEG_Qrandom_w512/newsynth
 ├──dalle2-epoch=37-valid_auroc=1.00-valid_loss=0.065-low_loss.ckpt
 ├──dalle3-epoch=47-valid_auroc=1.00-valid_loss=0.036-low_loss.ckpt
-...
+├──...
+```
 
+
+``` sh
+python evaluate.py -Q random -w 512 --compression jpeg --img_q random
+```
 
 
 ## Test on single image
@@ -120,14 +120,11 @@ python detect_one_image.py -i <img_path>
 <!-- An [IPOL demo](https://ipolcore.ipol.im/demo/clientApp/demo.html?id=77777000482) is now available. -->
 
 
-## Bibtex
-Coming soon
-
 ## ToDo list
 - ~~provide script for downloading data~~ 
 - ~~release preprocessing code~~
+- ~~release evaluation code of exp~~
 - release training code of exp
-- release evaluation code of exp
 - release code for single image
 
 Feel free to leave your comments in the [Issues](https://github.com/li-yanhao/masksim/issues) for any bugs found or any discussion 😇

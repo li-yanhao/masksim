@@ -1,19 +1,14 @@
 import os
-import glob
-from tqdm import tqdm
 from typing import List
 import argparse
 
 from src.masksim import MaskSim
 from src.dataset import MaskSimDataset, balanced_concat_dataloader
-import numpy as np
 import torch
 from torch import utils
 from torch.utils.data import (
-    SubsetRandomSampler,
     ConcatDataset
 )
-
 from pytorch_lightning.callbacks import ModelCheckpoint
 import pytorch_lightning as pl
 
@@ -59,7 +54,7 @@ IMG_SIZE = 512
 CHANNELS = 3
 LEARNING_RATE = 1e-3
 BATCH_SZ = 8
-NUM_WORKERS = 8  # os.cpu_count()  # 6
+NUM_WORKERS = 8
 MAX_EPOCHS = 50
 
 PREPROC = "DnCNN"
@@ -86,11 +81,9 @@ def train_on_one_class(train_class_name:str, Q:str):
     else:
         ckpt_tag = "uncompressed"
 
-    # ckpt_tag = "uncompressed" if Q is None else f"JPEG_Q{Q}"
     ckpt_tag += f"_w{IMG_SIZE}"
 
     color_space = "RGB" if Q is None else "YCbCr"
-    # compress_type = None if Q is None else "jpeg"
 
     compress_type = COMPRESSION_TYPE.lower()
     if compress_type is not None:
@@ -115,13 +108,10 @@ def train_on_one_class(train_class_name:str, Q:str):
     real_valid_folder_list = [f"processed_data/train/hdrburst",
                               f"processed_data/train/coco_val"]
 
-    if train_class_name == "ldm":
-        fake_train_valid_folder = f"processed_data/train/latent_diffusion"
-    else:
-        fake_train_valid_folder = f"data/{TRAINING_SET}/{DATASETS[TRAINING_SET][train_class_name]}"
+    fake_train_valid_folder = f"data/{TRAINING_SET}/{DATASETS[TRAINING_SET][train_class_name]}"
 
     model = MaskSim(img_size=IMG_SIZE, channels=CHANNELS, lr=LEARNING_RATE,
-                    num_masks=1, #num_masks=4,
+                    num_masks=1,
                     preproc_freeze=False, preprocess=PREPROC).float()
     real_train_dataset = MaskSimDataset(img_dir_real_list=img_dir_real_list, 
                                         img_dir_fake_list=[],
@@ -158,12 +148,6 @@ def train_on_one_class(train_class_name:str, Q:str):
     print_info(f"{fake_train_valid_folder}: {len(fake_dataset)} images")
 
     fake_train_dataset, fake_valid_dataset = torch.utils.data.random_split(fake_dataset, [0.9, 0.1])
-
-    # this dataloader is not balanced
-    # train_dataset = ConcatDataset([real_train_dataset, fake_train_dataset])
-    # train_dataloader = utils.data.DataLoader(train_dataset, batch_size=BATCH_SZ,
-    #                                    shuffle=True, num_workers=NUM_WORKERS,
-    #                                    collate_fn=MaskSimDataset.collate_fn)
 
     train_dataloader = balanced_concat_dataloader(
         real_train_dataset, fake_train_dataset, 
@@ -243,7 +227,6 @@ def train_on_multi_classes(train_class_names:List[str], Q:str):
     else:
         ckpt_tag = "uncompressed"
 
-    # ckpt_tag = "uncompressed" if Q is None else f"JPEG_Q{Q}"
     ckpt_tag += f"_w{IMG_SIZE}"
 
     color_space = "RGB" if Q is None else "YCbCr"
@@ -262,36 +245,18 @@ def train_on_multi_classes(train_class_names:List[str], Q:str):
     else:
         compress_q = None
 
-    # real_train_folder = f"processed_data/uncompressed/raise-2k"
-    # real_valid_folder = f"processed_data/uncompressed/hdrburst"
-    # fake_train_valid_folder = f"processed_data/{ckpt_tag}/{TRAINING_SET}/{DATASETS[TRAINING_SET][train_class_name]}"
-    
-    # the right version
-    # real_train_folder = f"processed_data/train/raise-2k"
-    # real_valid_folder = f"processed_data/train/hdrburst"
-
-    # DEBUG: just for try
     img_dir_real_list = [f"processed_data/train/mit5k",
                          f"processed_data/train/coco_train",
-                         f"processed_data/train/dresden",
-                         f"/gpfs/workdir/liy/datasets/train2014"
-                         ]
+                         f"processed_data/train/dresden"]
 
     real_valid_folder_list = [f"processed_data/train/hdrburst",
                               f"processed_data/train/coco_val"]
 
     fake_train_folder_list = []
     for train_class_name in train_class_names:
-        if train_class_name == "ldm":
-            fake_train_folder = f"processed_data/train/latent_diffusion"
-        else:
-            fake_train_folder = f"data/{TRAINING_SET}/{DATASETS[TRAINING_SET][train_class_name]}"
+        fake_train_folder = f"data/{TRAINING_SET}/{DATASETS[TRAINING_SET][train_class_name]}"
         fake_train_folder_list.append(fake_train_folder)
 
-    if train_class_name == "ldm":
-        fake_train_valid_folder = f"processed_data/train/latent_diffusion"
-    else:
-        fake_train_valid_folder = f"data/{TRAINING_SET}/{DATASETS[TRAINING_SET][train_class_name]}"
 
     model = MaskSim(img_size=IMG_SIZE, channels=CHANNELS, lr=LEARNING_RATE,
                     num_masks=1, #num_masks=4,
@@ -360,7 +325,7 @@ def train_on_multi_classes(train_class_names:List[str], Q:str):
 
 
     trainer = pl.Trainer(max_epochs=MAX_EPOCHS, accelerator="gpu",
-                        devices=[0], #devices=[0,],
+                        devices=[0],
                         num_nodes=1, deterministic=False,
                         limit_train_batches=0.1,
                         limit_val_batches=1.0,
