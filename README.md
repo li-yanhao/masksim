@@ -1,8 +1,7 @@
 # MaskSim: Detection of synthetic images by masked spectrum similarity analysis
 This is the official code of the paper: "MaskSim: Detection of synthetic images by masked spectrum similarity analysis" Yanhao Li, Quentin Bammey, Marina Gardella, Tina Nikoukhah, Jean-Michel Morel, Miguel Colom, Rafael Grompone von Gioi.
 
-<img src="./teaser.png" alt="preview" width="200" />
-
+<img src="./teaser.png" alt="teaser" style="width:100%;">
 
 
 ## Overview
