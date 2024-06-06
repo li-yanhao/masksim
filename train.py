@@ -208,8 +208,8 @@ def train_on_one_class(train_class_name:str, Q:str):
     )
 
     trainer = pl.Trainer(max_epochs=MAX_EPOCHS, 
-                        accelerator="cpu",
-                        # accelerator="gpu", devices=[0],
+                        # accelerator="cpu",
+                        accelerator="gpu", devices=[0],
                         num_nodes=1, deterministic=False,
                         limit_train_batches=1.0,
                         limit_val_batches=1.0,

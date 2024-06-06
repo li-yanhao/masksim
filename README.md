@@ -95,20 +95,21 @@ python train.py -w 512 -b 8 -e 50 -p DnCNN -Q random -v rand_jpeg_DnCNN --compre
 ```
 
 
-## Test
+## Evaluation
 ``` sh
-python evaluate.py -Q random -w 512 -v rand_jpeg_DnCNN --compression jpeg --img_q random
+# python evaluate.py -Q random -w 512 -v rand_jpeg_DnCNN --compression jpeg --img_q random
+python evaluate.py -Q random -w 512 --compression jpeg --img_q random
 ```
 
 
 The pretrained model weights can be downloaded [here](https://cirrus.universite-paris-saclay.fr/s/SscHmgDi2gyiF2s). Then unzip the weight files in the `checkpoints` folder like below:
 ```
-checkpoints
-├──compress_Q70
-├──compress_Q80
-├──compress_Q90
-├──uncompress
-```
+checkpoints/JPEG_Qrandom_w512/newsynth
+├──dalle2-epoch=37-valid_auroc=1.00-valid_loss=0.065-low_loss.ckpt
+├──dalle3-epoch=47-valid_auroc=1.00-valid_loss=0.036-low_loss.ckpt
+...
+
+
 
 ## Test on single image
 To test the program on one single image:

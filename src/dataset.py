@@ -143,7 +143,6 @@ class MaskSimDataset(Dataset):
                  limit_nb_img:int=None,
                  return_fname=False):
         super().__init__()
-        print(locals())
 
         self.img_fnames = []
         self.labels = []
