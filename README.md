@@ -1,7 +1,7 @@
 # MaskSim: Detection of synthetic images by masked spectrum similarity analysis
 
 <p align="center">
- <img src="./teaser.jpg" alt="preview" width="500pt" />
+ <img src="./teaser.png" alt="preview" width="500pt" />
 </p>
 
 This is the official code of the paper: "MaskSim: Detection of synthetic images by masked spectrum similarity analysis" Yanhao Li, Quentin Bammey, Marina Gardella, Tina Nikoukhah, Jean-Michel Morel, Miguel Colom, Rafael Grompone von Gioi.
@@ -32,38 +32,8 @@ dataset         | training | validation | test
 Use the following commands to prepare the data:
 
 ``` bash
-# prepare folders
-mkdir -p cache && mkdir -p data && mkdir -p processed_data
-
-# download pristine images
-wget -P cache https://cirrus.universite-paris-saclay.fr/s/2eabgG8fZy8nXME/download/train.zip
-unzip cache/train.zip -d cache/
-mv cache/train/* data/
-rm -r cache/train
-
-# download synthbuster dataset
-wget -P cache https://zenodo.org/records/10066460/files/synthbuster.zip
-unzip cache/synthbuster.zip -d data/
-
-# download newsynth dataset
-python download.py
-
-# prepare training and validation data
-mkdir -p processed_data/train
-ln -s $(realpath data/coco_train) processed_data/train/
-ln -s $(realpath data/coco_val) processed_data/train/coco_val
-ln -s $(realpath data/dresden) processed_data/train/dresden
-ln -s $(realpath data/hdrburst) processed_data/train/hdrburst
-ln -s $(realpath data/mit5k) processed_data/train/mit5k
-ln -s $(realpath data/newsynth) processed_data/train/newsynth
-
-# prepare evaluation data
-python preprocess.py
-
-# Optional: remove the cache/ folder where the zipped files are downloaded
-rm -r cache/
+sh data_preparation.sh
 ```
-
 
 The structure of the `processed_data/` folder should be like:
 
@@ -85,13 +55,6 @@ processed_data/
         ├──dalle2
         ├──dalle3
         ├──...
-```
-
-## Training
-
-
-``` sh
-python train.py -w 512 -b 8 -e 50 -p DnCNN -Q random --compression jpeg --progress
 ```
 
 
@@ -116,6 +79,15 @@ To test the program on one single image:
 ``` sh
 python detect_one_image.py -i <img_path>
 ```
+
+
+## Training
+
+
+``` sh
+python train.py -w 512 -b 8 -e 50 -p DnCNN -Q random --compression jpeg --progress
+```
+
 
 
 ## ToDo list
