@@ -102,7 +102,6 @@ def train_on_one_class(train_class_name:str, Q:str):
     img_dir_real_list = [f"processed_data/train/mit5k",
                          f"processed_data/train/coco_train",
                          f"processed_data/train/dresden",
-                         f"/gpfs/workdir/liy/datasets/train2014"
                          ]
 
     real_valid_folder_list = [f"processed_data/train/hdrburst",
@@ -121,7 +120,6 @@ def train_on_one_class(train_class_name:str, Q:str):
                                         mode="train",
                                         compress_aug=compress_type,
                                         compress_q=compress_q,
-                                        # limit_nb_img=5000
                                         )
     print_info(f"{img_dir_real_list}: {len(real_train_dataset)} images")
     
@@ -269,7 +267,6 @@ def train_on_multi_classes(train_class_names:List[str], Q:str):
                                         mode="train",
                                         compress_aug=compress_type,
                                         compress_q=compress_q,
-                                        # limit_nb_img=5000
                                         )
     print_info(f"{img_dir_real_list}: {len(real_train_dataset)} images")
     

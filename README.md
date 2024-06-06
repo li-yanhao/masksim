@@ -74,7 +74,7 @@ processed_data/
 │   └──synthbuster
 │       ├──dalle2
 │       ├──dalle3
-│       ...
+│       ├──...
 └──train
     ├──coco_train
     ├──coco_val
@@ -84,7 +84,7 @@ processed_data/
     └──newsynth
         ├──dalle2
         ├──dalle3
-        ...
+        ├──...
 ```
 
 ## Training
@@ -117,14 +117,12 @@ To test the program on one single image:
 python detect_one_image.py -i <img_path>
 ```
 
-<!-- An [IPOL demo](https://ipolcore.ipol.im/demo/clientApp/demo.html?id=77777000482) is now available. -->
-
 
 ## ToDo list
 - ~~provide script for downloading data~~ 
 - ~~release preprocessing code~~
 - ~~release evaluation code of exp~~
-- release training code of exp
-- release code for single image
+- ~~release code for single image~~
+- ~~release training code of exp~~
 
-Feel free to leave your comments in the [Issues](https://github.com/li-yanhao/masksim/issues) for any bugs found or any discussion 😇
+Feel free to leave your comments at the [Issues](https://github.com/li-yanhao/masksim/issues) for any bugs found or any discussion 😇
