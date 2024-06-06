@@ -1,7 +1,7 @@
 # MaskSim: Detection of synthetic images by masked spectrum similarity analysis
 
 <p align="center">
- <img src="./teaser.jpg" alt="preview" width="500pt" />
+ <img src="./teaser.png" alt="preview" width="500pt" />
 </p>
 
 This is the official code of the paper: "MaskSim: Detection of synthetic images by masked spectrum similarity analysis" Yanhao Li, Quentin Bammey, Marina Gardella, Tina Nikoukhah, Jean-Michel Morel, Miguel Colom, Rafael Grompone von Gioi.
@@ -32,38 +32,8 @@ dataset         | training | validation | test
 Use the following commands to prepare the data:
 
 ``` bash
-# prepare folders
-mkdir -p cache && mkdir -p data && mkdir -p processed_data
-
-# download pristine images
-wget -P cache https://cirrus.universite-paris-saclay.fr/s/2eabgG8fZy8nXME/download/train.zip
-unzip cache/train.zip -d cache/
-mv cache/train/* data/
-rm -r cache/train
-
-# download synthbuster dataset
-wget -P cache https://zenodo.org/records/10066460/files/synthbuster.zip
-unzip cache/synthbuster.zip -d data/
-
-# download newsynth dataset
-python download.py
-
-# prepare training and validation data
-mkdir -p processed_data/train
-ln -s $(realpath data/coco_train) processed_data/train/
-ln -s $(realpath data/coco_val) processed_data/train/coco_val
-ln -s $(realpath data/dresden) processed_data/train/dresden
-ln -s $(realpath data/hdrburst) processed_data/train/hdrburst
-ln -s $(realpath data/mit5k) processed_data/train/mit5k
-ln -s $(realpath data/newsynth) processed_data/train/newsynth
-
-# prepare evaluation data
-python preprocess.py
-
-# Optional: remove the cache/ folder where the zipped files are downloaded
-rm -r cache/
+sh data_preparation.sh
 ```
-
 
 The structure of the `processed_data/` folder should be like:
 
@@ -74,7 +44,7 @@ processed_data/
 │   └──synthbuster
 │       ├──dalle2
 │       ├──dalle3
-│       ...
+│       ├──...
 └──train
     ├──coco_train
     ├──coco_val
@@ -84,31 +54,24 @@ processed_data/
     └──newsynth
         ├──dalle2
         ├──dalle3
-        ...
-```
-
-## Training
-
-
-``` sh
-python train.py -w 512 -b 8 -e 50 -p DnCNN -Q random -v rand_jpeg_DnCNN --compression jpeg --progress
+        ├──...
 ```
 
 
 ## Evaluation
-``` sh
-# python evaluate.py -Q random -w 512 -v rand_jpeg_DnCNN --compression jpeg --img_q random
-python evaluate.py -Q random -w 512 --compression jpeg --img_q random
-```
 
-
-The pretrained model weights can be downloaded [here](https://cirrus.universite-paris-saclay.fr/s/SscHmgDi2gyiF2s). Then unzip the weight files in the `checkpoints` folder like below:
+The pretrained model weights can be downloaded [here](https://cirrus.universite-paris-saclay.fr/s/bk8yEHntsbaHW5n/download/checkpoints.zip). Then unzip the weight files in the `checkpoints` folder like below:
 ```
 checkpoints/JPEG_Qrandom_w512/newsynth
 ├──dalle2-epoch=37-valid_auroc=1.00-valid_loss=0.065-low_loss.ckpt
 ├──dalle3-epoch=47-valid_auroc=1.00-valid_loss=0.036-low_loss.ckpt
-...
+├──...
+```
 
+
+``` sh
+python evaluate.py -Q random -w 512 --compression jpeg --img_q random
+```
 
 
 ## Test on single image
@@ -117,17 +80,21 @@ To test the program on one single image:
 python detect_one_image.py -i <img_path>
 ```
 
-<!-- An [IPOL demo](https://ipolcore.ipol.im/demo/clientApp/demo.html?id=77777000482) is now available. -->
+
+## Training
 
 
-## Bibtex
-Coming soon
+``` sh
+python train.py -w 512 -b 8 -e 50 -p DnCNN -Q random --compression jpeg --progress
+```
+
+
 
 ## ToDo list
 - ~~provide script for downloading data~~ 
 - ~~release preprocessing code~~
-- release training code of exp
-- release evaluation code of exp
-- release code for single image
+- ~~release evaluation code of exp~~
+- ~~release code for single image~~
+- ~~release training code of exp~~
 
-Feel free to leave your comments in the [Issues](https://github.com/li-yanhao/masksim/issues) for any bugs found or any discussion 😇
+Feel free to leave your comments at the [Issues](https://github.com/li-yanhao/masksim/issues) for any bugs found or any discussion 😇
