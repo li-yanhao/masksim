@@ -14,7 +14,7 @@ WORKDIR $bin
 # RUN mkdir -p checkpoints
 RUN wget https://cirrus.universite-paris-saclay.fr/s/bk8yEHntsbaHW5n/download/checkpoints.zip -P ./ \
     && unzip checkpoints.zip \
-    && rm checkpoints.zip \
+    && rm checkpoints.zip
 
 RUN mkdir -p src/third_party/SyntheticImagesAnalysis/DenoiserWeight \
     && wget https://cirrus.universite-paris-saclay.fr/s/AyZbytJAmEymJNb/download/model_best.th -P src/third_party/SyntheticImagesAnalysis/DenoiserWeight/
