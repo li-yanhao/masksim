@@ -27,6 +27,7 @@ from torchmetrics.aggregation import MeanMetric
 
 from .third_party.SyntheticImagesAnalysis.DnCNN import make_net
 
+ROOT = os.path.dirname(os.path.realpath(__file__))
 
 class MonotoneLayer(nn.Module):
     def __init__(self, *args, **kwargs) -> None:
@@ -52,13 +53,13 @@ def get_model():
                         acts=['relu', ] * (num_levels - 1) + ['linear', ],
                         dilats=[1, ] * num_levels,
                         bn_momentum=0.1, padding=0)
-    weights_path = "src/third_party/SyntheticImagesAnalysis/DenoiserWeight/model_best.th"
+    weights_path = os.path.join(ROOT, "third_party/SyntheticImagesAnalysis/DenoiserWeight/model_best.th")
 
     if not os.path.isfile(weights_path):
         print("Start downloading DnCNN pretrained weights ...")
 
         import requests
-        weights_folder = "src/third_party/SyntheticImagesAnalysis/DenoiserWeight/"
+        weights_folder = os.path.join(ROOT, "third_party/SyntheticImagesAnalysis/DenoiserWeight/")
         os.makedirs(weights_folder, exist_ok=True)
         download_url = "https://cirrus.universite-paris-saclay.fr/s/AyZbytJAmEymJNb/download/model_best.th"
         response = requests.get(download_url)

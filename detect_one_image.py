@@ -43,7 +43,7 @@ def detect_one_image(fname: str):
     # 1. load model
     train_models = dict()
     for class_name in CLASS_NAMES:
-        ckpt_fpattern = os.path.join(f"checkpoints/JPEG_Qrandom_w512/newsynth/", class_name + "*.ckpt")
+        ckpt_fpattern = os.path.join(ROOT, f"checkpoints/JPEG_Qrandom_w512/newsynth/", class_name + "*.ckpt")
         ckpt_fnames = glob.glob(ckpt_fpattern)
         ckpt_fnames.sort(key=os.path.getctime)
         ckpt_fname = ckpt_fnames[-1]
