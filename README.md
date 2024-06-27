@@ -95,4 +95,18 @@ python train.py -w 512 -b 8 -e 50 -p DnCNN -Q random --compression jpeg --progre
 - ~~release code for single image~~
 - ~~release training code of exp~~
 
+
+## Bibtex
+```
+@InProceedings{Li_2024_CVPR,
+    author    = {Li, Yanhao and Bammey, Quentin and Gardella, Marina and Nikoukhah, Tina and Morel, Jean-Michel and Colom, Miguel and Von Gioi, Rafael Grompone},
+    title     = {MaskSim: Detection of Synthetic Images by Masked Spectrum Similarity Analysis},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
+    month     = {June},
+    year      = {2024},
+    pages     = {3855-3865}
+}
+```
+
+
 Feel free to leave your comments at the [Issues](https://github.com/li-yanhao/masksim/issues) for any bugs found or any discussion 😇
