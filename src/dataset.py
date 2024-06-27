@@ -196,6 +196,7 @@ class MaskSimDataset(Dataset):
     def process(self, fname:str, label:int):
         img = skimage.io.imread(fname)
         if np.ndim(img) == 2 or img.shape[0] < self.img_size or img.shape[1] < self.img_size:
+            print(f"ERROR: the input image must be larger than {self.img_size} both in width and length.")
             return None
 
         img = img[:, :, :3]

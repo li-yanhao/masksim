@@ -57,6 +57,9 @@ def detect_one_image(fname: str):
                              channels=3, color_space="YCbCr", mode="test")
 
     imgs = dataset.process(fname, label=None)
+
+    if imgs is None:
+        exit(0)
     
     # 3. compute scores
     score_final = -1
