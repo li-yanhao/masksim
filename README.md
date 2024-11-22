@@ -57,7 +57,7 @@ processed_data/
 ```
 
 
-(WARNING: Due to a large-scale cyberattack, the dataset stored on the server of Université Paris-Saclay was unavailable. We are redoing the data assemblage and finding an alternative storage space. The links will be updated later.)
+(WARNING: Due to a large-scale cyberattack, the dataset stored on the server of Université Paris-Saclay is unavailable. We are redoing the data assemblage and finding an alternative storage space. The links will be updated later.)
 
 ## Evaluation
 
