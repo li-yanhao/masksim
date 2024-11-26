@@ -155,6 +155,8 @@ def main_test_real(crop_size:int, Q:str, compression="jpeg"):
     in_folder = "data/raise"
     class_name = "raise"
 
+    print(f"Processing {in_folder}")
+
     if Q is None:
         out_folder = os.path.join(f"processed_data/uncompressed", class_name)
     else:

@@ -57,8 +57,6 @@ processed_data/
 ```
 
 
-(WARNING: Due to a large-scale cyberattack, the dataset stored on the server of Université Paris-Saclay is unavailable. We are redoing the data assemblage and finding an alternative storage space. The links will be updated later.)
-
 ## Evaluation
 
 The pretrained model weights can be downloaded [here](https://cirrus.universite-paris-saclay.fr/s/bk8yEHntsbaHW5n/download/checkpoints.zip). Then unzip the weight files in the `checkpoints` folder like below:
@@ -89,14 +87,6 @@ python detect_one_image.py -i <img_path>
 python train.py -w 512 -b 8 -e 50 -p DnCNN -Q random --compression jpeg --progress
 ```
 
-
-
-## ToDo list
-- ~~provide script for downloading data~~ 
-- ~~release preprocessing code~~
-- ~~release evaluation code of exp~~
-- ~~release code for single image~~
-- ~~release training code of exp~~
 
 
 ## Bibtex
