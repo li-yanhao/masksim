@@ -21,7 +21,7 @@ ln -s $(realpath data/mit5k) processed_data/train/mit5k
 ln -s $(realpath data/newsynth) processed_data/train/newsynth
 
 
-# prepare evaluation data
+# preprocess test data
 python preprocess.py
 
 
