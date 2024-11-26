@@ -9,7 +9,7 @@ This paper describes a semi-white-box method for detecting synthetic images by r
 
 
 ## Requirements
-See `requirements.txt`
+Test passed on python 3.8. See `requirements.txt` for library details.
 
 ## Data preparation
 
