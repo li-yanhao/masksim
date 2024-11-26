@@ -5,8 +5,7 @@ This is the official code of the paper: "MaskSim: Detection of synthetic images 
 
 
 ## Overview
-
-Synthetic image generation methods have recently revolutionized the way in which visual content is created. This opens up creative opportunities but also presents challenges in preventing misinformation and crime. Anyone using these tools can create convincing photorealistic images. However, these methods leave traces in the Fourier spectrum that are invisible to humans, but can be detected by specialized tools. This paper describes a semi-white-box method for detecting synthetic images by revealing anomalous patterns in the spectral domain. Specifically, we train a mask to enhance the most discriminative frequencies and simultaneously train a reference pattern that resembles the patterns produced by a given generative method. The proposed method produces comparable results to the state-of-the-art methods and highlights cues that can be used as forensic evidence. In contrast to most methods in the literature, the detections of the proposed method are explainable to a high degree.
+This paper describes a semi-white-box method for detecting synthetic images by revealing anomalous patterns in the spectral domain. Specifically, we train a mask to enhance the most discriminative frequencies and simultaneously train a reference pattern that resembles the patterns produced by a given generative method. The proposed method produces comparable results to the state-of-the-art methods and highlights cues that can be used as forensic evidence. In contrast to most methods in the literature, the detections of the proposed method are explainable to a high degree.
 
 
 ## Requirements
@@ -15,7 +14,7 @@ See `requirements.txt`
 ## Data preparation
 
 
-The pristine image datasets include Mit-5k, Dresden, COCO, HDR-Burst and Raise-1k. The synthetic image datasets include PolarDiffShield and Synthbuster. Detailed data scheme for training, validation and test is shown below:
+The pristine image datasets include `Mit-5k`, `Dresden`, `COCO`, `HDR-Burst` and `Raise-1k`. The synthetic image datasets include `PolarDiffShield` and `Synthbuster`. Detailed data scheme for training, validation and test is shown below:
 
 dataset         | training | validation | test
 :-------------: | :------: | :--------: | :--:
