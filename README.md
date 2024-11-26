@@ -72,7 +72,7 @@ python evaluate.py -Q random -w 512 --compression jpeg --img_q random
 ```
 
 
-## Test on single image
+## Test on a single image
 To test the program on one single image:
 ``` sh
 python detect_one_image.py -i <img_path>
