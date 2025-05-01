@@ -58,7 +58,7 @@ processed_data/
 
 ## Evaluation
 
-The pretrained model weights can be downloaded [here](http://avocat.ovh.hw.ipol.im/static/yanhao/masksim/checkpoints.zip). Then unzip the weight files in the `checkpoints` folder like below:
+The pretrained model weights can be downloaded [here](https://avocat.ovh.hw.ipol.im/static/yanhao/masksim/checkpoints.zip). Then unzip the weight files in the `checkpoints` folder like below:
 ```
 checkpoints/JPEG_Qrandom_w512/newsynth
 ├──dalle2-epoch=37-valid_auroc=1.00-valid_loss=0.065-low_loss.ckpt
