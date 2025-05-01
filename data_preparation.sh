@@ -7,7 +7,7 @@ mkdir -p cache && mkdir -p data && mkdir -p processed_data
 
 
 ## download the dataset
-wget -P cache http://avocat.ovh.hw.ipol.im/static/yanhao/masksim/data.tar.gz
+wget -P cache https://avocat.ovh.hw.ipol.im/static/yanhao/masksim/data.tar.gz
 tar -xzvf cache/data.tar.gz
 
 
