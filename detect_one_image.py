@@ -114,7 +114,7 @@ def get_sorted_neg_scores(csv_file_list: List[str]) -> List[float]:
     # read the csv with pandas
     neg_scores = []
     for csv_file in csv_file_list:
-        df = pd.read_csv(csv_file)
+        df = pd.read_csv(os.path.join(ROOT, csv_file))
         neg_scores.extend(df["score"].tolist())
     neg_scores = np.array(neg_scores)
     neg_scores.sort()
