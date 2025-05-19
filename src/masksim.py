@@ -325,8 +325,8 @@ class MaskSim(pl.LightningModule):
 
             vectors_ref = vectors_ref[None, ...].expand(B, C, K) # B, C*n, K
 
-            print("vectors", vectors.shape) # B, C, K=HW
-            print("vectors_ref", vectors_ref.shape) # B, C, K
+            # print("vectors", vectors.shape) # B, C, K=HW
+            # print("vectors_ref", vectors_ref.shape) # B, C, K
 
             vectors_l2 = torch.sqrt(torch.sum(vectors * vectors, dim=-1))[..., None] # B, C, 1
             vectors_ref_l2 = torch.sqrt(torch.sum(vectors_ref * vectors_ref, dim=-1))[..., None] # B, C, 1
@@ -335,7 +335,7 @@ class MaskSim(pl.LightningModule):
             vectors = vectors / (vectors_l2 + eps)
             vectors_ref = vectors_ref / (vectors_ref_l2 + eps)
             similarity_map = (vectors * vectors_ref).reshape(B, C, H, W)
-            print(similarity_map)
+            # print(similarity_map)
 
             return similarity_map
 
