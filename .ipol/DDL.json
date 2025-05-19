@@ -26,6 +26,27 @@
          "contents": {
             "Input": {
                "img": "input_0.png"
+            },
+            "Similarity map\nStable Diffusion 1.x": {
+               "img": "sim_map_sd1.png"
+            },
+            "Similarity map\nStable Diffusion 2": {
+               "img": "sim_map_sd2.png"
+            },
+            "Similarity map\nStable Diffusion XL": {
+               "img": "sim_map_sdxl.png"
+            },
+            "Similarity map\nDALL·E 2": {
+               "img": "sim_map_dalle2.png"
+            },
+            "Similarity map\nDALL·E 3": {
+               "img": "sim_map_dalle3.png"
+            },
+            "Similarity map\nMidjourney": {
+               "img": "sim_map_midjourney.png"
+            },
+            "Similarity map\nFirefly": {
+               "img": "sim_map_firefly.png"
             }
          }
       },
@@ -39,7 +60,14 @@
       "enable_reconstruct": true,
       "files": {
          "input_0.png": "input",
-         "stdout.txt": "result"
+         "stdout.txt": "result",
+         "sim_map_sd1.png": "Similarity map of Stable Diffusion 1.x",
+         "sim_map_sd2.png": "Similarity map of Stable Diffusion 2",
+         "sim_map_sdxl.png": "Similarity map of Stable Diffusion XL",
+         "sim_map_dalle2.png": "Similarity map of DALL·E 2",
+         "sim_map_dalle3.png": "Similarity map of DALL·E 3",
+         "sim_map_midjourney.png": "Similarity map of Midjourney",
+         "sim_map_firefly.png": "Similarity map of Firefly"
       },
       "info": {
          "run_time": "run time"

@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 import torch
 from scipy import ndimage
-import plotly.express as px
 import plotly.graph_objects as go
 
 from src.masksim import MaskSim
