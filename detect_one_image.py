@@ -198,7 +198,7 @@ def detect_one_image(fname: str):
     if imgs is None:
         exit(0)
 
-    model_to_scores = dict()
+    model_to_calib_scores = dict()
     
     # 3. compute scores
     print("Detection by specific models:")
@@ -211,10 +211,12 @@ def detect_one_image(fname: str):
             class_full_name = CLASS_FULLNAME_DICT[class_name]
             print("  Raw score from the detector of {}: {}".format(class_full_name, score))
 
-            model_to_scores[class_name] = score
-
             neg_scores = get_sorted_neg_scores(NEG_SCORE_FNAME_DICT[class_name])
             n_quantile = np.searchsorted(neg_scores, score)
+
+            calib_score = n_quantile / len(neg_scores)
+            model_to_calib_scores[class_name] = calib_score
+
             fpr = 1 - n_quantile / len(neg_scores)
             print("  FPR corresponding to the score: {:.1f}%".format(fpr * 100))
 
@@ -234,11 +236,11 @@ def detect_one_image(fname: str):
     print()
     
     print("Detection by generic model")
-    max_score = max(model_to_scores.values())
+    max_calib_score = max(model_to_calib_scores.values())
     neg_scores = get_sorted_neg_scores(NEG_SCORE_FNAME_DICT["max"])
-    n_quantile = np.searchsorted(neg_scores, max_score)
+    n_quantile = np.searchsorted(neg_scores, max_calib_score)
     fpr = 1 - n_quantile / len(neg_scores)
-    print("  Raw score from the generic model: {}".format(max_score))
+    print("  Raw score from the generic model: {}".format(max_calib_score))
     print("  FPR corresponding to the score: {:.1f}%".format(fpr * 100))
 
     if fpr < 0.01:
