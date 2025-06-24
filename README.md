@@ -3,6 +3,9 @@ This is the official code of the paper: "MaskSim: Detection of synthetic images 
 
 <img src="./teaser.png" alt="teaser" style="width:100%;">
 
+📄 [Paper](https://zenodo.org/records/12570481)
+
+🚀 [DEMO](https://ipolcore.ipol.im/demo/clientApp/demo.html?id=77777000482)
 
 ## Overview
 This paper describes a semi-white-box method for detecting synthetic images by revealing anomalous patterns in the spectral domain. Specifically, we train a mask to enhance the most discriminative frequencies and simultaneously train a reference pattern that resembles the patterns produced by a given generative method. The proposed method produces comparable results to the state-of-the-art methods and highlights cues that can be used as forensic evidence. In contrast to most methods in the literature, the detections of the proposed method are explainable to a high degree.
