@@ -222,8 +222,14 @@ class MaskSim(pl.LightningModule):
         self.conv_filter.requires_grad_(False)
 
     def preprocess_cross_diff(self, imgs:torch.Tensor) -> torch.Tensor:
-        """ imgs: BxCxHxW
-            return: BxCxHxW
+        """ 
+        Parameters
+        ----------
+        imgs: BxCxHxW
+        
+        Returns
+        -------
+        imgs_r: BxCxHxW
         """
         imgs_r = torch.zeros_like(imgs)
         imgs_r[:, :, :-1, :-1] = self.conv_filter(imgs)
@@ -255,8 +261,7 @@ class MaskSim(pl.LightningModule):
         return ffts.detach().cpu()
 
     def forward(self, imgs) -> torch.Tensor:
-        """_summary_
-
+        """
         Parameters
         ----------
         imgs : BxCxHxW
@@ -317,16 +322,12 @@ class MaskSim(pl.LightningModule):
             vectors_ref = ref_pattern.view(C, -1)  # C*n, K
             vectors = ffts_masked.view(B, C, -1)  # B, C, K
 
-
             K = vectors_ref.shape[-1]
 
             vectors_ref = vectors_ref - torch.mean(vectors_ref, dim=-1)[..., None] 
             vectors = self.norm_vector(vectors)
 
             vectors_ref = vectors_ref[None, ...].expand(B, C, K) # B, C*n, K
-
-            # print("vectors", vectors.shape) # B, C, K=HW
-            # print("vectors_ref", vectors_ref.shape) # B, C, K
 
             vectors_l2 = torch.sqrt(torch.sum(vectors * vectors, dim=-1))[..., None] # B, C, 1
             vectors_ref_l2 = torch.sqrt(torch.sum(vectors_ref * vectors_ref, dim=-1))[..., None] # B, C, 1
@@ -374,11 +375,6 @@ class MaskSim(pl.LightningModule):
             torch.concat([probs_pos, probs_neg]),
             torch.concat([torch.ones_like(probs_pos), torch.zeros_like(probs_neg)]),
         )
-        
-        loss_neg = similarity_neg.mean().abs() # force the negative similarities to be centered at 0
-
-        lam = 10
-        loss = loss_ce + lam * loss_neg
 
         loss = loss_ce
 
