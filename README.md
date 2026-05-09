@@ -22,7 +22,7 @@ The pristine image datasets include `Mit-5k`, `Dresden`, `COCO`, `HDR-Burst` and
 dataset         | training | validation | test
 :-------------: | :------: | :--------: | :--:
 [Mit-5k](https://data.csail.mit.edu/graphics/fivek/)          | ✅       |            |  
-[Dreden](https://dl.acm.org/doi/10.1145/1774088.1774427)          | ✅       |            |  
+[Dresden](https://dl.acm.org/doi/10.1145/1774088.1774427)          | ✅       |            |  
 [COCO](https://cocodataset.org/#home)            | ✅       | ✅         | 
 [HDR-Burst](https://hdrplusdata.org/dataset.html)       |          |         ✅ | 
 [Raise-1k](http://loki.disi.unitn.it/RAISE/download.html)        |          |            | ✅
